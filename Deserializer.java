@@ -18,7 +18,7 @@ public class Deserializer {
         ServerSocket serverSocket = new ServerSocket(receiverPort);
         System.out.println("Server is listening on port " + receiverPort);
         Socket socket = serverSocket.accept();
-        System.out.println("Client connected");
+        System.out.println("Client connected\n");
 
         byte[] receivedBytes = getBytes(socket);
         Document document = convertToDocument(receivedBytes);
