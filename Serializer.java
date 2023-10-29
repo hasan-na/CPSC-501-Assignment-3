@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import org.jdom.Document;
@@ -12,8 +13,10 @@ import java.util.Scanner;
 
 public class Serializer implements Serializable
 {
+   private static Document document;
+   private static Element root;
   
-   public void textBasedMenu(Scanner scanner)
+   public void textBasedMenu(Scanner scanner) throws IOException, IllegalArgumentException, IllegalAccessException
    {
       System.out.println("\nChoose one of the following options for which object you would like to create.\n");
       System.out.println("1. An object that contains primitive fields");
@@ -27,38 +30,45 @@ public class Serializer implements Serializable
 
       if  (userInput == 1)
       {
-         createPrimitiveVariableObject();
+         createPrimitiveVariableObject(scanner);
       }
-
       if  (userInput == 2)
       {
          createObjectReference();
       }
-
       if  (userInput == 3)
       {
          createObjectArrayPrimitive();;
       }
-
       if  (userInput == 4)
       {
          createObjectArrayReferences();
       }
-
       if  (userInput == 5)
       {
          createObjectJavaClass();
       }
-
       if (1 <= userInput && userInput <= 5)
       {
          textBasedMenu(scanner);
       }
    }
 
-   public void createPrimitiveVariableObject()
+   public void createPrimitiveVariableObject(Scanner scanner) throws IOException, IllegalArgumentException, IllegalAccessException
    {
-      System.out.println("\nCreated object with primitive fields\n");
+      scanner.nextLine();
+      System.out.print("Write the string value you wish: ");
+      String string = scanner.nextLine();
+
+      System.out.print("Write the int value you wish: ");
+      int number = scanner.nextInt();
+
+      System.out.print("Write the boolean value you wish: ");
+      boolean value = scanner.nextBoolean();
+
+      Dog dog = new Dog(string, number, value);
+      serialize(dog);
+      System.out.println("\nObject has been created");
    }
 
    public void createObjectReference()
@@ -81,20 +91,29 @@ public class Serializer implements Serializable
       System.out.println("\nCreated object using a java collection class\n");
    }
 
-   public Document serialize(Object obj) throws IOException
+  
+   public Document serialize(Object obj) throws IOException, IllegalArgumentException, IllegalAccessException
    {
-      Element root = new Element("serialized");
-      Document document = new Document(root);
+         Class<?> classObject = obj.getClass();
+         String className = classObject.getName();
+         Field[] fields = classObject.getDeclaredFields();
 
-      Element element1 = new Element("element1");
-      element1.setText("This is element 1");
-
-      Element element2 = new Element("element2");
-      element2.setText("This is element 2");
-
-      root.addContent(element1);
-      root.addContent(element2);
-      //ADD THE CHILDREN OBJECT FROM CREATEOBJECT() **IMP**------------------------------------------------------------------------------------------------------
+         Element objectElement = new Element("object");
+         objectElement.setAttribute("class", className);
+         objectElement.setAttribute("id", "0");
+         root.addContent(objectElement);
+         
+         for (Field field : fields)
+         {
+            field.setAccessible(true);
+            Element fieldElement = new Element("field");
+            fieldElement.setAttribute("name", field.getName());
+            fieldElement.setAttribute("declaringclass", className);
+            objectElement.addContent(fieldElement);
+            Element fieldValue = new Element("value");
+            fieldValue.addContent(field.get(obj).toString());
+            fieldElement.addContent(fieldValue);
+         }
       return document;
    }
 
@@ -125,13 +144,16 @@ public class Serializer implements Serializable
       objectOutputStream.close();
    }
 
-    public static void main(String[] args) throws UnknownHostException, IOException
+    public static void main(String[] args) throws UnknownHostException, IOException, IllegalArgumentException, IllegalAccessException
     {
+     root = new Element("serialized");
+     document = new Document(root);
+
      Serializer serializer = new Serializer();
      Scanner scanner = new Scanner(System.in);
      serializer.textBasedMenu(scanner);
      scanner.close();
-     Document document = serializer.serialize(null);
+
      byte[] convertedDocument = serializer.convertToBytes(document);
      serializer.startConnection(convertedDocument);
    }
