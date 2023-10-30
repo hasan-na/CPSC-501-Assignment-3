@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -41,7 +42,7 @@ public class Serializer implements Serializable
       }
       if  (userInput == 3)
       {
-         createObjectArrayPrimitive();;
+         createObjectArrayPrimitive(scanner);
       }
       if  (userInput == 4)
       {
@@ -90,9 +91,18 @@ public class Serializer implements Serializable
       System.out.println("\nObjects have been created");
    }
 
-    public void createObjectArrayPrimitive()
+    public void createObjectArrayPrimitive(Scanner scanner) throws IllegalArgumentException, IllegalAccessException, IOException
    {
-      System.out.println("\nCreated object that contains an array of primitives\n");
+      System.out.print("Please input how big you want the array to be: ");
+      int size = scanner.nextInt();
+      Grades primitiveArray = new Grades(size);
+      for(int i = 0; i < size ; i++)
+      {
+      System.out.print("Please input the numbers you would like in the array: ");
+      int number = scanner.nextInt();
+      primitiveArray.setValue(i, number); 
+      }
+      serialize(primitiveArray);
    }
 
     public void createObjectArrayReferences()
@@ -130,7 +140,22 @@ public class Serializer implements Serializable
             fieldElement.setAttribute("name", field.getName());
             fieldElement.setAttribute("declaringclass", className);
             objectElement.addContent(fieldElement);
-            if(!field.getType().isPrimitive())
+            
+            if(field.getType().isArray())
+            {
+               Object array = field.get(obj);
+               int length = Array.getLength(array);
+               objectElement.setAttribute("length", Integer.toString(length));
+               for(int i = 0; i < length; i++)
+               {
+                  Object value = Array.get(array, i);
+                  Element arrayValue = new Element("value");
+                  arrayValue.addContent(value.toString());
+                  fieldElement.addContent(arrayValue);
+               }
+            }
+            
+            else if(!field.getType().isPrimitive())
             {
                Object referenced = field.get(obj);
                uniqueID = id;
