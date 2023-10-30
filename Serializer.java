@@ -37,7 +37,7 @@ public class Serializer implements Serializable
       }
       if  (userInput == 2)
       {
-         createObjectReference();
+         createObjectReference(scanner);
       }
       if  (userInput == 3)
       {
@@ -59,24 +59,35 @@ public class Serializer implements Serializable
 
    public void createPrimitiveVariableObject(Scanner scanner) throws IOException, IllegalArgumentException, IllegalAccessException
    {
-      scanner.nextLine();
-      System.out.print("Write the string value you wish: ");
-      String string = scanner.nextLine();
-
+     
       System.out.print("Write the int value you wish: ");
       int number = scanner.nextInt();
 
       System.out.print("Write the boolean value you wish: ");
       boolean value = scanner.nextBoolean();
 
-      Dog dog = new Dog(string, number, value);
+      Dog dog = new Dog(number, value);
       serialize(dog);
       System.out.println("\nObject has been created");
    }
 
-   public void createObjectReference()
+   public void createObjectReference(Scanner scanner) throws IllegalArgumentException, IllegalAccessException, IOException
    {
-      System.out.println("\nCreated object that references other objects\n");
+
+      System.out.print("Write the int value you wish for the first object: ");
+      int number1 = scanner.nextInt();
+
+      System.out.print("Write the int value you wish for the second object: ");
+      int number2 = scanner.nextInt();
+
+      System.out.print("Write the boolean value you wish for the second object: ");
+      boolean value = scanner.nextBoolean();
+
+      Dog dog = new Dog(number2, value);
+      Owner owner = new Owner(number1, dog);
+
+      serialize(owner);
+      System.out.println("\nObjects have been created");
    }
 
     public void createObjectArrayPrimitive()
@@ -119,9 +130,22 @@ public class Serializer implements Serializable
             fieldElement.setAttribute("name", field.getName());
             fieldElement.setAttribute("declaringclass", className);
             objectElement.addContent(fieldElement);
-            Element fieldValue = new Element("value");
-            fieldValue.addContent(field.get(obj).toString());
-            fieldElement.addContent(fieldValue);
+            if(!field.getType().isPrimitive())
+            {
+               Object referenced = field.get(obj);
+               uniqueID = id;
+               idMap.put(referenced, uniqueID);
+               Element fieldValue = new Element("reference");
+               fieldValue.addContent(Integer.toString(idMap.get(referenced)));
+               fieldElement.addContent(fieldValue);
+               serialize(referenced);
+            }
+            else
+            {
+               Element fieldValue = new Element("value");
+               fieldValue.addContent(field.get(obj).toString());
+               fieldElement.addContent(fieldValue);
+            }
          }
       return document;
    }
