@@ -9,12 +9,15 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+
+import java.util.IdentityHashMap;
 import java.util.Scanner;
 
 public class Serializer implements Serializable
 {
    private static Document document;
    private static Element root;
+   private static int id;
   
    public void textBasedMenu(Scanner scanner) throws IOException, IllegalArgumentException, IllegalAccessException
    {
@@ -93,14 +96,20 @@ public class Serializer implements Serializable
 
   
    public Document serialize(Object obj) throws IOException, IllegalArgumentException, IllegalAccessException
-   {
+   {  
+         IdentityHashMap<Object, Integer> idMap = new IdentityHashMap<>();
+         int uniqueID = 0;
          Class<?> classObject = obj.getClass();
          String className = classObject.getName();
          Field[] fields = classObject.getDeclaredFields();
 
+         uniqueID = id;
+         idMap.put(obj, uniqueID);
+         id++;
+
          Element objectElement = new Element("object");
          objectElement.setAttribute("class", className);
-         objectElement.setAttribute("id", "0");
+         objectElement.setAttribute("id", Integer.toString(uniqueID));
          root.addContent(objectElement);
          
          for (Field field : fields)
