@@ -6,10 +6,10 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 
 import java.util.IdentityHashMap;
 import java.util.Scanner;
@@ -46,7 +46,7 @@ public class Serializer implements Serializable
       }
       if  (userInput == 4)
       {
-         createObjectArrayReferences();
+         createObjectArrayReferences(scanner);
       }
       if  (userInput == 5)
       {
@@ -105,9 +105,21 @@ public class Serializer implements Serializable
       serialize(primitiveArray);
    }
 
-    public void createObjectArrayReferences()
+    public void createObjectArrayReferences(Scanner scanner) throws IllegalArgumentException, IllegalAccessException, IOException
    {
-      System.out.println("\nCreated object that contains an array of references to other objects\n");
+      System.out.print("Please input how big you want the array to be: ");
+      int size = scanner.nextInt();
+      ObjectArray objectArray = new ObjectArray(size);
+      for(int i = 0; i < size ; i++)
+      {
+      System.out.print("Please input the age for the object " + (i + 1) + " that you are creating: ");
+      int number = scanner.nextInt();
+      System.out.print("Please input the boolean value for the object " + (i + 1) + " that you are creating: ");
+      boolean value = scanner.nextBoolean();
+      Dog dog = new Dog(number, value);
+      objectArray.setValue(i, dog); 
+      }
+      serialize(objectArray);
    }
 
     public void createObjectJavaClass()
@@ -143,15 +155,33 @@ public class Serializer implements Serializable
             
             if(field.getType().isArray())
             {
-               Object array = field.get(obj);
-               int length = Array.getLength(array);
-               objectElement.setAttribute("length", Integer.toString(length));
-               for(int i = 0; i < length; i++)
+               if (field.getType().getComponentType().isPrimitive()) 
                {
-                  Object value = Array.get(array, i);
-                  Element arrayValue = new Element("value");
-                  arrayValue.addContent(value.toString());
-                  fieldElement.addContent(arrayValue);
+                  Object array = field.get(obj);
+                  int length = Array.getLength(array);
+                  objectElement.setAttribute("length", Integer.toString(length));
+                  for(int i = 0; i < length; i++)
+                  {
+                     Object value = Array.get(array, i);
+                     Element arrayValue = new Element("value");
+                     arrayValue.addContent(value.toString());
+                     fieldElement.addContent(arrayValue);
+                  }
+               }
+               else
+               {
+                  Object referenced = field.get(obj);
+                  int length = Array.getLength(referenced);
+                  for(int i = 0; i < length; i++)
+                  {
+                     Object inArray = Array.get(referenced, i);
+                     uniqueID = id;
+                     idMap.put(inArray, uniqueID);
+                     Element fieldValue = new Element("reference");
+                     fieldValue.addContent(Integer.toString(idMap.get(inArray)));
+                     fieldElement.addContent(fieldValue);
+                     serialize(inArray);
+                  }
                }
             }
             
