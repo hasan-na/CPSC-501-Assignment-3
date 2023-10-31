@@ -72,8 +72,8 @@ public class Serializer implements Serializable
          System.out.print("Write the boolean value you wish: ");
          boolean value = scanner.nextBoolean();
 
-         Dog dog = new Dog(number, value);
-         serialize(dog);
+         Cat cat = new Cat(number, value);
+         serialize(cat);
       }
    }
 
@@ -125,8 +125,8 @@ public class Serializer implements Serializable
       int number = scanner.nextInt();
       System.out.print("Please input the boolean value for the object " + (i + 1) + " that you are creating: ");
       boolean value = scanner.nextBoolean();
-      Dog dog = new Dog(number, value);
-      objectArray.setValue(i, dog); 
+      Cat cat = new Cat(number, value);
+      objectArray.setValue(i, cat); 
       }
       serialize(objectArray);
    }
@@ -142,8 +142,8 @@ public class Serializer implements Serializable
       int number = scanner.nextInt();
       System.out.print("Please input the boolean value for the object " + (i + 1) + " that you are creating: ");
       boolean value = scanner.nextBoolean();
-      Dog dog = new Dog(number, value);
-      objectArrayList.addObject(dog);
+      Cat cat = new Cat(number, value);
+      objectArrayList.addObject(cat);
       }
       serialize(objectArrayList);
    }
@@ -168,11 +168,7 @@ public class Serializer implements Serializable
          for (Field field : fields)
          {
             field.setAccessible(true);
-            Element fieldElement = new Element("field");
-            fieldElement.setAttribute("name", field.getName());
-            fieldElement.setAttribute("declaringclass", className);
-            objectElement.addContent(fieldElement);
-
+            
             if(Collection.class.isAssignableFrom(field.getType()))
             {
                Object referenced = field.get(obj);
@@ -184,7 +180,7 @@ public class Serializer implements Serializable
                   idMap.put(inArray, uniqueID);
                   Element fieldValue = new Element("reference");
                   fieldValue.addContent(Integer.toString(idMap.get(inArray)));
-                  fieldElement.addContent(fieldValue);
+                  objectElement.addContent(fieldValue);
                   serialize(inArray);
                }
             }
@@ -201,7 +197,7 @@ public class Serializer implements Serializable
                      Object value = Array.get(array, i);
                      Element arrayValue = new Element("value");
                      arrayValue.addContent(value.toString());
-                     fieldElement.addContent(arrayValue);
+                     objectElement.addContent(arrayValue);
                   }
                }
                else
@@ -216,7 +212,7 @@ public class Serializer implements Serializable
                      idMap.put(inArray, uniqueID);
                      Element fieldValue = new Element("reference");
                      fieldValue.addContent(Integer.toString(idMap.get(inArray)));
-                     fieldElement.addContent(fieldValue);
+                     objectElement.addContent(fieldValue);
                      serialize(inArray);
                   }
                }
@@ -224,6 +220,10 @@ public class Serializer implements Serializable
             
             else if(!field.getType().isPrimitive())
             {
+               Element fieldElement = new Element("field");
+               fieldElement.setAttribute("name", field.getName());
+               fieldElement.setAttribute("declaringclass", className);
+               objectElement.addContent(fieldElement);
                Object referenced = field.get(obj);
                if(!idMap.containsKey(referenced))
                {
@@ -244,6 +244,10 @@ public class Serializer implements Serializable
             }
             else
             {
+               Element fieldElement = new Element("field");
+               fieldElement.setAttribute("name", field.getName());
+               fieldElement.setAttribute("declaringclass", className);
+               objectElement.addContent(fieldElement);
                Element fieldValue = new Element("value");
                fieldValue.addContent(field.get(obj).toString());
                fieldElement.addContent(fieldValue);
