@@ -10,9 +10,9 @@ import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
-
 import java.util.IdentityHashMap;
 import java.util.Scanner;
+import java.util.Collection;
 
 public class Serializer implements Serializable
 {
@@ -50,7 +50,7 @@ public class Serializer implements Serializable
       }
       if  (userInput == 5)
       {
-         createObjectJavaClass();
+         createObjectJavaClass(scanner);
       }
       if (1 <= userInput && userInput <= 5)
       {
@@ -122,9 +122,21 @@ public class Serializer implements Serializable
       serialize(objectArray);
    }
 
-    public void createObjectJavaClass()
+    public void createObjectJavaClass(Scanner scanner) throws IllegalArgumentException, IllegalAccessException, IOException
    {
-      System.out.println("\nCreated object using a java collection class\n");
+      System.out.print("Please input how big you want the array to be: ");
+      int size = scanner.nextInt();
+      CollectionArray objectArrayList = new CollectionArray(size);
+      for(int i = 0; i < size ; i++)
+      {
+      System.out.print("Please input the age for the object " + (i + 1) + " that you are creating: ");
+      int number = scanner.nextInt();
+      System.out.print("Please input the boolean value for the object " + (i + 1) + " that you are creating: ");
+      boolean value = scanner.nextBoolean();
+      Dog dog = new Dog(number, value);
+      objectArrayList.addObject(dog);
+      }
+      serialize(objectArrayList);
    }
 
   
@@ -152,8 +164,24 @@ public class Serializer implements Serializable
             fieldElement.setAttribute("name", field.getName());
             fieldElement.setAttribute("declaringclass", className);
             objectElement.addContent(fieldElement);
+
+            if(Collection.class.isAssignableFrom(field.getType()))
+            {
+               Object referenced = field.get(obj);
+               int length = ((java.util.Collection<?>) referenced).size();
+               objectElement.setAttribute("length", Integer.toString(length));
+               for(Object inArray : (java.util.Collection<?>) referenced)
+               { 
+                  uniqueID = id;
+                  idMap.put(inArray, uniqueID);
+                  Element fieldValue = new Element("reference");
+                  fieldValue.addContent(Integer.toString(idMap.get(inArray)));
+                  fieldElement.addContent(fieldValue);
+                  serialize(inArray);
+               }
+            }
             
-            if(field.getType().isArray())
+           else if(field.getType().isArray())
             {
                if (field.getType().getComponentType().isPrimitive()) 
                {
@@ -172,6 +200,7 @@ public class Serializer implements Serializable
                {
                   Object referenced = field.get(obj);
                   int length = Array.getLength(referenced);
+                  objectElement.setAttribute("length", Integer.toString(length));
                   for(int i = 0; i < length; i++)
                   {
                      Object inArray = Array.get(referenced, i);
