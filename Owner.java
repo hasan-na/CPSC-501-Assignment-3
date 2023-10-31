@@ -4,7 +4,8 @@ public class Owner {
 
     public Owner(int age, Dog dog) {
     this.age = age;
-    this.dog = dog;     
+    this.dog = dog;  
+    dog.setOwner(this);   
     }
 
     public int getAge(){

@@ -2,15 +2,15 @@ import java.util.ArrayList;
 import java.util.List;
 public class CollectionArray 
 {
-    private List<Object>  objectList;
+    private List<Object>  objectArrayList;
 
     public CollectionArray(int size)
     {
-        objectList = new ArrayList<Object>(size);
+        objectArrayList = new ArrayList<Object>(size);
     }
 
     public void addObject(Object obj)
     {
-        objectList.add(obj);
+        objectArrayList.add(obj);
     }
 }

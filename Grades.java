@@ -6,11 +6,6 @@ public class Grades
     {
         intArray = new int[size];
     }
-    
-    public int[] getPrimitveArray()
-    {
-        return intArray;
-    }
 
     public void setValue(int index, int number)
     {

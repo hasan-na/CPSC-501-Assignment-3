@@ -19,6 +19,7 @@ public class Serializer implements Serializable
    private static Document document;
    private static Element root;
    private static int id;
+   IdentityHashMap<Object, Integer> idMap = new IdentityHashMap<>();
   
    public void textBasedMenu(Scanner scanner) throws IOException, IllegalArgumentException, IllegalAccessException
    {
@@ -60,35 +61,43 @@ public class Serializer implements Serializable
 
    public void createPrimitiveVariableObject(Scanner scanner) throws IOException, IllegalArgumentException, IllegalAccessException
    {
-     
-      System.out.print("Write the int value you wish: ");
-      int number = scanner.nextInt();
+      System.out.print("How many objects would you like to create: ");
+      int length = scanner.nextInt();
 
-      System.out.print("Write the boolean value you wish: ");
-      boolean value = scanner.nextBoolean();
+      for(int i = 0; i < length; i++)
+      {
+         System.out.print("Write the int value you wish: ");
+         int number = scanner.nextInt();
 
-      Dog dog = new Dog(number, value);
-      serialize(dog);
-      System.out.println("\nObject has been created");
+         System.out.print("Write the boolean value you wish: ");
+         boolean value = scanner.nextBoolean();
+
+         Dog dog = new Dog(number, value);
+         serialize(dog);
+      }
    }
 
    public void createObjectReference(Scanner scanner) throws IllegalArgumentException, IllegalAccessException, IOException
    {
+      System.out.print("How many objects would you like to create: ");
+      int length = scanner.nextInt();
 
-      System.out.print("Write the int value you wish for the first object: ");
-      int number1 = scanner.nextInt();
+      for(int i = 0; i< length; i++)
+      {
+         System.out.print("Write the int value you wish for the first object: ");
+         int ownerNumber = scanner.nextInt();
 
-      System.out.print("Write the int value you wish for the second object: ");
-      int number2 = scanner.nextInt();
+         System.out.print("Write the int value you wish for the second object: ");
+         int dogNumber = scanner.nextInt();
 
-      System.out.print("Write the boolean value you wish for the second object: ");
-      boolean value = scanner.nextBoolean();
+         System.out.print("Write the boolean value you wish for the second object: ");
+         boolean dogvalue = scanner.nextBoolean();
 
-      Dog dog = new Dog(number2, value);
-      Owner owner = new Owner(number1, dog);
+         Dog dog = new Dog(dogNumber, dogvalue);
+         Owner owner = new Owner(ownerNumber, dog);
 
-      serialize(owner);
-      System.out.println("\nObjects have been created");
+         serialize(owner);
+      }
    }
 
     public void createObjectArrayPrimitive(Scanner scanner) throws IllegalArgumentException, IllegalAccessException, IOException
@@ -142,7 +151,6 @@ public class Serializer implements Serializable
   
    public Document serialize(Object obj) throws IOException, IllegalArgumentException, IllegalAccessException
    {  
-         IdentityHashMap<Object, Integer> idMap = new IdentityHashMap<>();
          int uniqueID = 0;
          Class<?> classObject = obj.getClass();
          String className = classObject.getName();
@@ -217,12 +225,22 @@ public class Serializer implements Serializable
             else if(!field.getType().isPrimitive())
             {
                Object referenced = field.get(obj);
-               uniqueID = id;
-               idMap.put(referenced, uniqueID);
-               Element fieldValue = new Element("reference");
-               fieldValue.addContent(Integer.toString(idMap.get(referenced)));
-               fieldElement.addContent(fieldValue);
-               serialize(referenced);
+               if(!idMap.containsKey(referenced))
+               {
+                  uniqueID = id;
+                  idMap.put(referenced, uniqueID);
+                  Element fieldValue = new Element("reference");
+                  fieldValue.addContent(Integer.toString(idMap.get(referenced)));
+                  fieldElement.addContent(fieldValue);
+                  serialize(referenced);
+               
+               }
+               else
+               {
+                  Element fieldValue = new Element("reference");
+                  fieldValue.addContent(Integer.toString(idMap.get(referenced)));
+                  fieldElement.addContent(fieldValue);
+               }
             }
             else
             {
