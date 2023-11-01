@@ -85,17 +85,15 @@ public class Serializer implements Serializable
 
       for(int i = 0; i< length; i++)
       {
-         System.out.print("Write the int value you wish for the first object: ");
-         int ownerNumber = scanner.nextInt();
-
-         System.out.print("Write the int value you wish for the second object: ");
+     
+         System.out.print("Write the int value you wish for the object: ");
          int dogNumber = scanner.nextInt();
 
-         System.out.print("Write the boolean value you wish for the second object: ");
+         System.out.print("Write the boolean value you wish for the object: ");
          boolean dogvalue = scanner.nextBoolean();
 
          Dog dog = new Dog(dogNumber, dogvalue);
-         Owner owner = new Owner(ownerNumber, dog);
+         Owner owner = new Owner(dog);
 
          serialize(owner);
       }
@@ -169,92 +167,113 @@ public class Serializer implements Serializable
          for (Field field : fields)
          {
             field.setAccessible(true);
-            
             if(Collection.class.isAssignableFrom(field.getType()))
             {
-               Object referenced = field.get(obj);
-               int length = ((java.util.Collection<?>) referenced).size();
-               objectElement.setAttribute("length", Integer.toString(length));
-               for(Object inArray : (java.util.Collection<?>) referenced)
-               { 
-                  uniqueID = id;
-                  idMap.put(inArray, uniqueID);
-                  Element fieldValue = new Element("reference");
-                  fieldValue.addContent(Integer.toString(idMap.get(inArray)));
-                  objectElement.addContent(fieldValue);
-                  serialize(inArray);
-               }
+               collectionClass(field, obj, objectElement, uniqueID);
             }
-            
-           else if(field.getType().isArray())
+            else if(field.getType().isArray())
             {
                if (field.getType().getComponentType().isPrimitive()) 
                {
-                  Object array = field.get(obj);
-                  int length = Array.getLength(array);
-                  objectElement.setAttribute("length", Integer.toString(length));
-                  for(int i = 0; i < length; i++)
-                  {
-                     Object value = Array.get(array, i);
-                     Element arrayValue = new Element("value");
-                     arrayValue.addContent(value.toString());
-                     objectElement.addContent(arrayValue);
-                  }
+                  primitiveArrayMethod(field, obj, objectElement);
                }
                else
                {
-                  Object referenced = field.get(obj);
-                  int length = Array.getLength(referenced);
-                  objectElement.setAttribute("length", Integer.toString(length));
-                  for(int i = 0; i < length; i++)
-                  {
-                     Object inArray = Array.get(referenced, i);
-                     uniqueID = id;
-                     idMap.put(inArray, uniqueID);
-                     Element fieldValue = new Element("reference");
-                     fieldValue.addContent(Integer.toString(idMap.get(inArray)));
-                     objectElement.addContent(fieldValue);
-                     serialize(inArray);
-                  }
+                  objectArrayMethod(field, obj, objectElement, uniqueID);
                }
             }
-            
             else if(!field.getType().isPrimitive())
             {
-               Element fieldElement = new Element("field");
-               fieldElement.setAttribute("name", field.getName());
-               fieldElement.setAttribute("declaringclass", className);
-               objectElement.addContent(fieldElement);
-               Object referenced = field.get(obj);
-               if(!idMap.containsKey(referenced))
-               {
-                  uniqueID = id;
-                  idMap.put(referenced, uniqueID);
-                  Element fieldValue = new Element("reference");
-                  fieldValue.addContent(Integer.toString(idMap.get(referenced)));
-                  fieldElement.addContent(fieldValue);
-                  serialize(referenced);
-               
-               }
-               else
-               {
-                  Element fieldValue = new Element("reference");
-                  fieldValue.addContent(Integer.toString(idMap.get(referenced)));
-                  fieldElement.addContent(fieldValue);
-               }
+              objectFieldMethod(objectElement, field, obj, className, uniqueID);
             }
             else
             {
-               Element fieldElement = new Element("field");
-               fieldElement.setAttribute("name", field.getName());
-               fieldElement.setAttribute("declaringclass", className);
-               objectElement.addContent(fieldElement);
-               Element fieldValue = new Element("value");
-               fieldValue.addContent(field.get(obj).toString());
-               fieldElement.addContent(fieldValue);
+               primitiveFieldMethod(objectElement, field, obj, className);
             }
          }
       return document;
+   }
+
+   public void collectionClass(Field field, Object obj, Element objectElement, int uniqueID) throws IllegalArgumentException, IllegalAccessException, IOException
+   {
+      Object referenced = field.get(obj);
+      int length = ((java.util.Collection<?>) referenced).size();
+      objectElement.setAttribute("length", Integer.toString(length));
+      for(Object inArray : (java.util.Collection<?>) referenced)
+      { 
+         uniqueID = id;
+         idMap.put(inArray, uniqueID);
+         Element fieldValue = new Element("reference");
+         fieldValue.addContent(Integer.toString(idMap.get(inArray)));
+         objectElement.addContent(fieldValue);
+         serialize(inArray);
+      }    
+   }
+
+   public void primitiveArrayMethod(Field field, Object obj, Element objectElement) throws IllegalArgumentException, IllegalAccessException
+   {
+      Object array = field.get(obj);
+      int length = Array.getLength(array);
+      objectElement.setAttribute("length", Integer.toString(length));
+      for(int i = 0; i < length; i++)
+      {
+         Object value = Array.get(array, i);
+         Element arrayValue = new Element("value");
+         arrayValue.addContent(value.toString());
+         objectElement.addContent(arrayValue);
+      }
+   }
+
+   public void objectArrayMethod(Field field, Object obj, Element objectElement, int uniqueID) throws IllegalArgumentException, IllegalAccessException, IOException
+   {
+      Object referenced = field.get(obj);
+      int length = Array.getLength(referenced);
+      objectElement.setAttribute("length", Integer.toString(length));
+      for(int i = 0; i < length; i++)
+      {
+         Object inArray = Array.get(referenced, i);
+         uniqueID = id;
+         idMap.put(inArray, uniqueID);
+         Element fieldValue = new Element("reference");
+         fieldValue.addContent(Integer.toString(idMap.get(inArray)));
+         objectElement.addContent(fieldValue);
+         serialize(inArray);
+      }
+   }
+
+   public void objectFieldMethod(Element objectElement, Field field, Object obj, String className, int uniqueID) throws IllegalArgumentException, IllegalAccessException, IOException
+   {
+      Element fieldElement = new Element("field");
+      fieldElement.setAttribute("name", field.getName());
+      fieldElement.setAttribute("declaringclass", className);
+      objectElement.addContent(fieldElement);
+      Object referenced = field.get(obj);
+      if(!idMap.containsKey(referenced))
+      {
+         uniqueID = id;
+         idMap.put(referenced, uniqueID);
+         Element fieldValue = new Element("reference");
+         fieldValue.addContent(Integer.toString(idMap.get(referenced)));
+         fieldElement.addContent(fieldValue);
+         serialize(referenced);
+      }
+      else
+      {
+         Element fieldValue = new Element("reference");
+         fieldValue.addContent(Integer.toString(idMap.get(referenced)));
+         fieldElement.addContent(fieldValue);
+      }
+   }
+
+   public void primitiveFieldMethod(Element objectElement, Field field, Object obj, String className) throws IllegalArgumentException, IllegalAccessException
+   {
+      Element fieldElement = new Element("field");
+      fieldElement.setAttribute("name", field.getName());
+      fieldElement.setAttribute("declaringclass", className);
+      objectElement.addContent(fieldElement);
+      Element fieldValue = new Element("value");
+      fieldValue.addContent(field.get(obj).toString());
+      fieldElement.addContent(fieldValue);
    }
 
    public void startConnection(byte[] serializedData) throws UnknownHostException, IOException

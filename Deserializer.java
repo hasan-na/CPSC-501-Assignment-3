@@ -5,7 +5,7 @@ import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.IdentityHashMap;
 
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
@@ -16,6 +16,7 @@ import java.lang.reflect.*;
 
 public class Deserializer {
     private static ArrayList<Object> recreatedObjects = new ArrayList<Object>();
+    private static IdentityHashMap<Object, Integer> objectMap = new IdentityHashMap<>();
    
     public Document receiveConnection() throws IOException, JDOMException{
         int receiverPort = 12345; 
@@ -60,6 +61,7 @@ public class Deserializer {
             Class<?> classObj = Class.forName(objectElement.getAttributeValue("class"));
             String lengthAttribute = objectElement.getAttributeValue("length");
             String className = objectElement.getAttributeValue("class");
+            int id = Integer.parseInt(objectElement.getAttributeValue("id"));
 
             if(lengthAttribute != null)
             {
@@ -75,6 +77,7 @@ public class Deserializer {
                         intArray[i] = Integer.parseInt(arrayElement.getText());
                     }
                     obj = (Object) constructor.newInstance(length, intArray);
+                    objectMap.put(obj, id);
                 }
                 else 
                 {
@@ -89,6 +92,7 @@ public class Deserializer {
                             objArray.add(elementText);
                         }
                         obj = (Object) constructor.newInstance(length , objArray);
+                        objectMap.put(obj, id);
                     }
                     else
                     {
@@ -100,6 +104,7 @@ public class Deserializer {
                             objList[i] = arrayElement.getText();
                         }
                         obj = (Object) constructor.newInstance(length , objList);
+                        objectMap.put(obj, id);
                     }
                 }
                 recreatedObjects.add(obj);
@@ -113,6 +118,7 @@ public class Deserializer {
                 Field field = classObj.getDeclaredField(fieldName);
                 field.setAccessible(true);
 
+                
                 if (field.getType() == int.class)
                 {
                     intValue = Integer.parseInt(value.getText());
@@ -121,19 +127,36 @@ public class Deserializer {
                 {
                     booleanValue = Boolean.parseBoolean(value.getText());
                 }
+
+                if (!field.getType().isPrimitive()) 
+                {
+                    if (fieldName.equals("dog")) 
+                    {
+                        Constructor<?> ownerConstructor = classObj.getConstructor(Dog.class);
+                        obj = new Dog(intValue, booleanValue);
+                        Object obj1 = (Object) ownerConstructor.newInstance(obj);
+                        objectMap.put(obj1, id);
+                        recreatedObjects.add(obj1);
+                    } 
+                }
             }
+
             if(classObj.getName() == "Cat")
             {
                 Constructor<?> constructorObj = classObj.getConstructor(int.class, boolean.class);
                 obj = (Object) constructorObj.newInstance(intValue, booleanValue);
                 recreatedObjects.add(obj);
+                objectMap.put(obj, id);
             }
-            // if(classObj.getName() == "Owner")
-            // {
-            //     Constructor<?> constructorObj = classObj.getConstructor(int.class, dog.class);
-            //     obj = (Object) constructorObj.newInstance(intValue, dogValue);
-            //     recreatedObjects.add(obj);
-            // }
+
+            if(classObj.getName() == "Dog")
+            {
+                Constructor<?> constructorObj = classObj.getConstructor(int.class, boolean.class);
+                obj = (Object) constructorObj.newInstance(intValue, booleanValue);
+                recreatedObjects.add(obj);
+                objectMap.put(obj, id);
+            }
+        
         }
         return recreatedObjects;
     }
@@ -147,6 +170,7 @@ public class Deserializer {
             Field[] fields = classObj.getDeclaredFields();
 
             System.out.println("Class of object: " + classObj.getName() + "\n");
+            System.out.println("ID of current object is: " + objectMap.get(obj) +"\n");
 
     
             System.out.println("---------------- START OF FIELDS ----------------\n");
@@ -186,7 +210,6 @@ public class Deserializer {
         Deserializer deserializer = new Deserializer();
         Document document = deserializer.receiveConnection();
         deserializer.deserialize(document);
-        deserializer.visualizer(recreatedObjects);
-        
+        deserializer.visualizer(recreatedObjects); 
     }
 }
