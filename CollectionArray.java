@@ -4,9 +4,10 @@ public class CollectionArray
 {
     private List<Object>  objectArrayList;
 
-    public CollectionArray(int size)
+    public CollectionArray(int size, ArrayList<Object> objectArrayList)
     {
-        objectArrayList = new ArrayList<Object>(size);
+        this.objectArrayList = new ArrayList<Object>(size);
+        this.objectArrayList = objectArrayList;
     }
 
     public void addObject(Object obj)

@@ -5,6 +5,8 @@ import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collection;
+
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.Element;
@@ -50,20 +52,21 @@ public class Deserializer {
         int intValue = 0;
         Boolean booleanValue = false;
         int[] intArray = new int[1];
+        Object[] objList = new Object[1];
+        ArrayList<Object> objArray = new ArrayList<Object>();
 
         for (Element objectElement : root.getChildren("object"))
         {
             Class<?> classObj = Class.forName(objectElement.getAttributeValue("class"));
             String lengthAttribute = objectElement.getAttributeValue("length");
-            //int objectId = Integer.parseInt(objectElement.getAttributeValue("id"));
-            //String referenceObjectID = "-1";
+            String className = objectElement.getAttributeValue("class");
 
             if(lengthAttribute != null)
             {
+                int length = Integer.parseInt(objectElement.getAttributeValue("length"));
                 Element valueAttribute = objectElement.getChild("value");
                 if(valueAttribute != null)
                 {
-                    int length = Integer.parseInt(objectElement.getAttributeValue("length"));
                     Constructor<?> constructor = classObj.getConstructor(int.class, int[].class);
                     intArray = new int[length];
                     for (int i = 0; i < length; i++)
@@ -73,9 +76,31 @@ public class Deserializer {
                     }
                     obj = (Object) constructor.newInstance(length, intArray);
                 }
-                else
+                else 
                 {
-                    
+                    if(className.equals("CollectionArray"))
+                    {
+                        Constructor<?> constructor = classObj.getConstructor(int.class, ArrayList.class);
+                        objArray = new ArrayList<Object>();
+                        for (int i = 0; i < length; i++)
+                        {
+                            Element arrayElement = objectElement.getChildren("reference").get(i);
+                            String elementText = arrayElement.getText();
+                            objArray.add(elementText);
+                        }
+                        obj = (Object) constructor.newInstance(length , objArray);
+                    }
+                    else
+                    {
+                        Constructor<?> constructor = classObj.getConstructor(int.class, Object[].class);
+                        objList = new Object[length];
+                        for (int i = 0; i < length; i++)
+                        {
+                            Element arrayElement = objectElement.getChildren("reference").get(i);
+                            objList[i] = arrayElement.getText();
+                        }
+                        obj = (Object) constructor.newInstance(length , objList);
+                    }
                 }
                 recreatedObjects.add(obj);
             }
@@ -84,10 +109,9 @@ public class Deserializer {
             {
                 String fieldName = fieldElement.getAttributeValue("name");
                 Element value = fieldElement.getChild("value"); 
-                //Element reference = fieldElement.getChild("reference");
-
+        
                 Field field = classObj.getDeclaredField(fieldName);
-                field.setAccessible(false);
+                field.setAccessible(true);
 
                 if (field.getType() == int.class)
                 {
@@ -97,44 +121,6 @@ public class Deserializer {
                 {
                     booleanValue = Boolean.parseBoolean(value.getText());
                 }
-            
-                // if(!field.getType().isPrimitive())
-                // {
-                //     int referenceIntValue = 0;
-                //     Boolean referenceBooleanValue = false;
-                //     referenceObjectID = reference.getText();
-                //     Element referenceObjectElement = root.getChild(referenceObjectID);
-                //     Class<?> referenceClassObj = Class.forName(referenceObjectElement.getAttributeValue("class"));
-                //     for(Element referenceFieldElement : referenceObjectElement.getChildren("field"))
-                //     {
-                //         String referenceFieldName = referenceFieldElement.getAttributeValue("name");
-                //         Element referenceValue = referenceFieldElement.getChild("value");
-                        
-                //         Field referenceField = referenceClassObj.getDeclaredField(referenceFieldName);
-                //         referenceField.setAccessible(true);
-
-                //         if (referenceField.getType() == int.class)
-                //         {
-                //             referenceIntValue = Integer.parseInt(referenceValue.getText());
-                //         }
-
-                //         if(referenceField.getType() == boolean.class)
-                //         {
-                //             referenceBooleanValue = Boolean.parseBoolean(referenceValue.getText());
-                //         }
-
-                //         if(classObj.getName() == "Cat")
-                //         {
-                //             Constructor<?> constructorObj = classObj.getConstructor(int.class, boolean.class);
-                //             Object referenceObj = (Object) constructorObj.newInstance(referenceIntValue, referenceBooleanValue);
-                //             System.out.println("int value is: " + intValue);
-                //             System.out.println("boolean value is: " + booleanValue);
-                //             recreatedObjects.add(referenceObj);
-                //         }
-
-                //     }
-                    
-                // }
             }
             if(classObj.getName() == "Cat")
             {

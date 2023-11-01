@@ -1,9 +1,10 @@
 public class ObjectArray {
     private Object[] objectArray;
 
-    public ObjectArray(int size)
+    public ObjectArray(int size, Object[] objectArray)
     {
-        objectArray = new Object[size];
+        this.objectArray = new Object[size];
+        this.objectArray = objectArray;
     }
 
     public void setValue(int index, Object obj)

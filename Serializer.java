@@ -12,6 +12,7 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import java.util.IdentityHashMap;
 import java.util.Scanner;
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class Serializer implements Serializable
@@ -118,7 +119,7 @@ public class Serializer implements Serializable
    {
       System.out.print("Please input how big you want the array to be: ");
       int size = scanner.nextInt();
-      ObjectArray objectArray = new ObjectArray(size);
+      ObjectArray objectArray = new ObjectArray(size, new Object[size]);
       for(int i = 0; i < size ; i++)
       {
       System.out.print("Please input the age for the object " + (i + 1) + " that you are creating: ");
@@ -135,7 +136,7 @@ public class Serializer implements Serializable
    {
       System.out.print("Please input how big you want the array to be: ");
       int size = scanner.nextInt();
-      CollectionArray objectArrayList = new CollectionArray(size);
+      CollectionArray objectArrayList = new CollectionArray(size, new ArrayList<Object>(size));
       for(int i = 0; i < size ; i++)
       {
       System.out.print("Please input the age for the object " + (i + 1) + " that you are creating: ");
