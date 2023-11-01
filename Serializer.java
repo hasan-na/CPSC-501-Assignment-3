@@ -104,7 +104,7 @@ public class Serializer implements Serializable
    {
       System.out.print("Please input how big you want the array to be: ");
       int size = scanner.nextInt();
-      Grades primitiveArray = new Grades(size);
+      Grades primitiveArray = new Grades(size, new int[size]);
       for(int i = 0; i < size ; i++)
       {
       System.out.print("Please input the numbers you would like in the array: ");

@@ -2,9 +2,10 @@ public class Grades
 {
     private int[] intArray;
 
-    public Grades(int size)
+    public Grades(int size, int[] intArray)
     {
-        intArray = new int[size];
+        this.intArray = new int[size];
+        this.intArray = intArray;
     }
 
     public void setValue(int index, int number)
